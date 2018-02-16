@@ -8,334 +8,383 @@
 #importing libraries
 import random
 import pygame
- 
-#colours
-BLACK = (0, 0, 0) #rgb code for pure black
-WHITE = (255, 255, 255) #rbg code for pure white
 
 # --- PYGAME SETUP ---
-pygame.init() #initlization of pygame
-
-#monitors time
+pygame.init()
 clock = pygame.time.Clock()
-
-#screen specifications
-size = (1000, 700) #1000 pixels wide, 700 pixels tall
+size = (1000, 700)
 screen = pygame.display.set_mode(size)
-
-#window title
 pygame.display.set_caption("Reindeer Carts")
+ 
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
 
 # --- CLASSES FOR SPRITE CREATION ---
-#player class w/ methods for other sprites
-class Player(pygame.sprite.Sprite): #allows pygame sprite commands to work
+#Built for the player class but applies for other child classes.
+#Each class loads their own .png for sprite usage.
+#.png's are made transparent.
+#Methods for movement created from Player class.
+class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        #player attributes
-        self.image = pygame.image.load("reindeer_minecart.png").convert() #loads image
-        self.image.set_colorkey(WHITE) #makes white transparent
-        self.rect = self.image.get_rect() #draws hitbox and calls rect for positioning
-        self.health_points = 10 #preset health points
-        #speed of movement (only for player sprite)
-        self.speed_x = 0 #values change when keyboard pressed
+        #Attributes
+        self.image = pygame.image.load("reindeer_minecart.png").convert()
+        self.image.set_colorkey(WHITE) #transparency
+        self.rect = self.image.get_rect() #sprite hitbox
+        self.health_points = 10
+        #Movement (only for player sprite).
+        self.speed_x = 0
         self.speed_y = 0 
-    #player movement
+    #Player movement.
     def move(self):
-        #moves by changing location of sprite at a certain speed
+        #Changes location by speed.
         self.rect.x += self.speed_x
         self.rect.y += self.speed_y
-    #resets xy positions of coal / presents
+    #Reset non-player sprite positions when called.
+    #The reset position is randomly staggered and limited to the screen.
     def reset_pos(self):
-        self.rect.y = random.randrange(-25, 675) #limits positions to the height of the screen
-        self.rect.x = random.randrange(1000, 2000) #makes it seem like the sprites spawn at irregular intervals
-    #moves coal / presents, also checks if it's offscreen
-    def update(self, speed): #sprite movespeed is predetermined here
-        self.rect.x += speed #moves sprites from the right to left at the determined speed
-        #moves sprites back onto the screen
-        if self.rect.x < -100: #if the sprites move off the screen
-            self.reset_pos() #reset them back to the left at new positions
+        self.rect.y = random.randrange(-25, 675) 
+        self.rect.x = random.randrange(1000, 2000) 
+    #Handles movement for all non-player sprites.
+    def update(self, speed):
+        self.rect.x += speed
+        #When the sprites move offscreen, call the method to reset their positions.
+        if self.rect.x < -100:
+            self.reset_pos()
 
-#coal class to load seperate sprite image
-class Coal(Player):#inherits from Player class
+#Child Coal class.
+#Seperate sprite and "get_rect".
+class Coal(Player):
     def __init__(self):
         super().__init__()
-        self.image = pygame.image.load("coal.png").convert() #loads image
-        self.image.set_colorkey(WHITE) #makes white transparent
-        self.rect = self.image.get_rect() #draws hitbox and calls rect for positioning'
+        self.image = pygame.image.load("coal.png").convert() 
+        self.image.set_colorkey(WHITE)
+        self.rect = self.image.get_rect() 
 
-#presents class to load seperate sprite image
-class Presents(Player): #Player class inheritance
+#Child Presents class.
+class Presents(Player):
     def __init__(self):
         super().__init__()
-        self.image = pygame.image.load("present.png").convert() #loads image
-        self.image.set_colorkey(WHITE) #transparency
-        self.rect = self.image.get_rect() #draws hitbox
+        self.image = pygame.image.load("present.png").convert() 
+        self.image.set_colorkey(WHITE) 
+        self.rect = self.image.get_rect() 
 
-##failed health visualization, used numbers instead
-##class Health(Player): ##the health bar
+##Attempt at creating a health bar.
+##class Health(Player):
 ##    def __init__(self):
 ##        super().__init__()
 ##        self.image = pygame.image.load("heart.png").convert()
 ##        self.image.set_colorkey(BLACK)
 ##        self.rect = self.image.get_rect()
 
-# --- SPRITE GENERATION ---        
-#generate random starting coal positions
+# --- SPRITE GENERATION ---
+#Function to spawn random coal.
+#Randomly creates coal objects within a location.
+#This creates a "staggered" feeling of movement from each sprite.
 def createCoal():
-    #create all the coal
-    for i in range(4): #initial generation number
+    for i in range(4):
+        #Class call.
         coal_block = Coal()
-        #spawn in random positions
+        #Positions.
         coal_block.rect.x = random.randrange(1000, 2000)
         coal_block.rect.y = random.randrange(-25, 675)
-        #adds coal objects to lists
-        coal_list.add(coal_block) #used for coal hit detection
-        all_sprites_list.add(coal_block) #to be drawn all at once
+        #Adds objects to seperate list.
+        coal_list.add(coal_block)
+        #Adds objects to list with all sprites.
+        all_sprites_list.add(coal_block)
 
-#generate random starting present positions
+#Function to spawn random presents.
+#Randomly creates present objects.
 def createPresents():
-    #create all the coal
-    for i in range(4): #initial generation number
+    for i in range(4):
         presents = Presents()
-        #spawn in random positions
+        #Spawn randomly.
         presents.rect.x = random.randrange(1000, 2000)
         presents.rect.y = random.randrange(-25, 675)
-        #adds presents objects to lists
+        #Add objects to lists.
         presents_list.add(presents)
         all_sprites_list.add(presents)
 
 
 # --- LISTS OF SPRITES ---
-#list of all coal
+#Sprite Lists
+#Used to hold objects to be drawn.
 coal_list = pygame.sprite.Group()
-
-#list of presents
 presents_list = pygame.sprite.Group()
-
-#list of health hearts
-hearts_list = pygame.sprite.Group()
-
-#list of all the sprites in the game
 all_sprites_list = pygame.sprite.Group()
 
 # --- INITIALIZING THE PLAYER SPRITE ---
-#create player
-player_main = Player() #a player sprite is created from the Player class
-player_main.rect.y = 250 #presets starting position of the sprite
-all_sprites_list.add(player_main) #adds sprite to all sprites list
+#Generate one player sprite.
+#Set the y value manually and add it the list to be drawn.
+player_main = Player() 
+player_main.rect.y = 250
+all_sprites_list.add(player_main)
 
 # --- COAL & PRESENTS SPRITE GENERATION ---
-#calls functions to generate all randomly placed non-player sprites
+#Generate non-player sprites using the function.
 createPresents()
 createCoal()
 
 # --- SPRITE HIT COUNTING VARIABLES ---
-#counts non-player sprites collected by the player
+#Counts non-player sprites collected by the player.
 coal_hit_counter = 0
 presents_hit_counter = 0
 
 # --- IMAGES AND SOUND ---
-#background images
-background_image = pygame.image.load("game_background.png").convert() #minecraft background
-death_image = pygame.image.load("death.png").convert() #dark souls styled death screen
+#Background images.
+background_image = pygame.image.load("game_background.png").convert() #background
+death_image = pygame.image.load("death.png").convert() #end screen
 start_image = pygame.image.load("startscreen.png").convert() #main menu
-instructions_image = pygame.image.load("instructions.png").convert() #instructions for player
+instructions_image = pygame.image.load("instructions.png").convert() #instructions
 
-#sound effects
+#Sound effects.
 death_sound = pygame.mixer.Sound("death_sound.ogg") #dark souls death sound
 main_music = pygame.mixer.Sound("legendsneverdie.ogg") #league soundtrack
 
 # --- CONTROLLING THE LOOPS ---
-#loop controllers
-program_start = True #allows program to run
-start_screen = True #first screen polayers see
-end_screen = False #shown when game ends
-instructions_screen = False #shown after start_screen
-game_start = False #the actual game loop
-show_instructions = True #used to check if instructions have been shown
+#Controlling the game loops.
+program_start = True #Starting the game.
+start_screen = True #Splash screen.
+end_screen = False #Endgame screen.
+instructions_screen = False #Instructions for controls.
+game_start = False #Gameplay loop.
+show_instructions = True #Check if player has seen instructions.
 
 # --- MAIN PROGRAM LOOP ---
-while program_start: #keeps game running as the program checks which while loop to loop through
+#Keeps the program running through the sub-loops.
+while program_start:
 
-    #main menu
-    while start_screen: #first screen to show since it starts as True
-        screen.blit(start_image, [0,0]) #blit the start screen background
-        for event in pygame.event.get(): #checks for any commands
-            #exititing the game
-            if event.type == pygame.QUIT: #if the user wants to quit
-                #sets all variables as False to quit
+    #Main menu.
+    while start_screen:
+        screen.blit(start_image, [0,0]) #Blit background.
+
+        #Checks for any commands.
+        for event in pygame.event.get(): 
+            #Force-closing the game.
+            if event.type == pygame.QUIT:
+                #Sets all variables as False to quit.
                 start_screen = False
                 program_start = False
-            #continue to play
-            elif event.type == pygame.KEYDOWN: #checks for keypresses downwards
-                if event.key == pygame.K_RETURN: #when the player hits enter
-                    for sprite in all_sprites_list: #resets all sprite positions
-                        sprite.reset_pos()          #by calling the method
-                    player_main.rect.y = 250 #resets player's starting position
-                    player_main.rect.x = 5   #by placing it at an arbitrary position
-                    #starts the game
-                    start_screen = False #stops looping through the start screen
-                    instructions_screen = True #goes to instructions screen
-        #refreshes screen
+
+            #Continue.
+            #Checking for key presses.
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    #Resets all positions (for replaying players).
+                    for sprite in all_sprites_list:
+                        #Call method to reset any sprites.
+                        sprite.reset_pos()
+                    #Reset player starting position.
+                    player_main.rect.y = 250
+                    player_main.rect.x = 5
+                    #Moves to instructions screen.
+                    start_screen = False
+                    instructions_screen = True
+
+        #Refresh rate.
         pygame.display.flip()
         clock.tick(60)
 
-    #end of game screen
-    while end_screen: #become True when player loses all health
-        screen.blit(death_image, [0,0]) #blit the end of game background
-        font = pygame.font.SysFont('Hobo STD', 100, True, False) #initializes font
-        score = font.render(str(int(presents_hit_counter)*10),True,WHITE) #calculates final score
-        screen.blit(score, [500, 120]) #blit the final score
-        #check for key presses
+    #Endgame screen.
+    while end_screen:
+        #Blit background and text.
+        screen.blit(death_image, [0,0])
+        font = pygame.font.SysFont('Hobo STD', 100, True, False) 
+        score = font.render(str(int(presents_hit_counter)*10),True,WHITE) 
+        screen.blit(score, [500, 120]) #Final score.
+
         for event in pygame.event.get():
-            #force quit
-            if event.type == pygame.QUIT: #if user exits using the window
-                end_screen = False #stops looping the end of game screen
-                program_start = False #stops looping the main program
+            #Force-closing the game.
+            if event.type == pygame.QUIT:
+                end_screen = False 
+                program_start = False
+
+            #Check for key presses.
             elif event.type == pygame.KEYDOWN:
-                #play again
-                if event.key == pygame.K_RETURN: #when enter is hit
-                    death_sound.stop() #stops playing dark souls death sound
-                    end_screen = False  #stops the end screen
-                    start_screen = True #goes back to the main menu
-                    #reset counting variables
-                    coal_hit_counter = 0 #coal counter reset
-                    presents_hit_counter = 0 #presents counter reset
-                #exit game
-                elif event.key == pygame.K_ESCAPE: #if ESC is pressed
-                    #any True variables set to False to quit
+                #Enter to play again.
+                if event.key == pygame.K_RETURN:
+                    #End endgame elements and restart game.
+                    death_sound.stop()
+                    end_screen = False 
+                    start_screen = True 
+                    #Reset the counters.
+                    coal_hit_counter = 0 
+                    presents_hit_counter = 0 
+
+                #ESC to quit.
+                elif event.key == pygame.K_ESCAPE:
+                    #All True variables set to False to quit.
                     end_screen = False
                     program_start = False
-        #refreshes screen
+
+        #Refresh.
         pygame.display.flip()
         clock.tick(60)
 
-    #displays instructions
-    while instructions_screen: #becomes True when player hits ENTER on start screen
-        if show_instructions == True: #show instructions if never played before
-            screen.blit(instructions_image, [0,0]) #blit the instructions image on screen
+    #Instructions.
+    while instructions_screen:
+        #Show the instructions by blitting it.
+        #Only shown once (before the first playthrough).
+        if show_instructions == True: 
+            screen.blit(instructions_image, [0,0]) 
+
             for event in pygame.event.get():
-                #exit game
-                if event.type == pygame.QUIT: #if the user hits exit
-                    #sets all variables as False to quit
+                #If player wants to quit.
+                if event.type == pygame.QUIT:
                     instructions_screen = False
                     program_start = False
-                #play game
+
+                #Continue to play the game.
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_RETURN: #when the player hits enter
-                        main_music.play() #starts playing main theme
-                        main_music.set_volume(0.25) #sets music volume to 25%
-                        instructions_screen = False #stops looping through instructions
-                        game_start = True           #begins the game loop
+                    #Starts the game with music.
+                    if event.key == pygame.K_RETURN:
+                        main_music.play() 
+                        instructions_screen = False 
+                        game_start = True
+
+        #Start game if the instructions has already been shown before.
         else:
-            instructions_screen = False #stops looping through instructions
-            game_start = True           #starts game
-        #refreshes screen
+            main_music.play() 
+            instructions_screen = False
+            game_start = True
+
+        #Refresh.
         pygame.display.flip()
         clock.tick(60)
 
-    #GAME LOOP
-    while game_start: #begins after instructions screen
-        #event loops
+    #Actual game loop.
+    while game_start:
+        
         for event in pygame.event.get():
-            if event.type == pygame.QUIT: #if user hits exits button
-                #set all True variables to false to quit
+            #If player wants to quit.
+            if event.type == pygame.QUIT:
                 game_start = False
                 program_start = False
-            #when WASD keys are pressed
+
+            #Player control.
             elif event.type == pygame.KEYDOWN:
-                #controlling the reindeer
-                if event.key == pygame.K_w: #move up
-                    #stops sprite from going offscreen
-                    if player_main.rect.y <= 0: #if the sprite's too high
-                        player_main.speed_y = 0 #stops moving
+                #Moving up.
+                if event.key == pygame.K_w:
+                    #Prevent offscreen movement.
+                    #When the sprite is moving offscreen, then stop any input in that direction.
+                    if player_main.rect.y <= 0: #Stops movement at a certain point.
+                        player_main.speed_y = 0
                     else:
-                        player_main.speed_y = -10 #otherwise move normally
-                elif event.key == pygame.K_a: #move left
-                    if player_main.rect.x <= 0: #if sprite's moving to the left offscreen
-                        player_main.speed_x = 0 #stop moving
+                        player_main.speed_y = -10 #Move normally.
+                #Moving to the left.
+                elif event.key == pygame.K_a: 
+                    if player_main.rect.x <= 0: 
+                        player_main.speed_x = 0 
                     else:
                         player_main.speed_x = -10          
-                elif event.key == pygame.K_s: #move down
-                    if player_main.rect.y >= 533: #if sprite's too low
-                        player_main.speed_y = 0 #stop moving
+                #Moving down.
+                elif event.key == pygame.K_s:
+                    if player_main.rect.y >= 533: 
+                        player_main.speed_y = 0 
                     else:
                         player_main.speed_y = 10
-                elif event.key == pygame.K_d: #move right
-                    if player_main.rect.x >= 856: #if sprite's moving to the right offscreen
-                        player_main.speed_x = 0 #stop moving
+                #Moving to the right.
+                elif event.key == pygame.K_d: 
+                    if player_main.rect.x >= 856:
+                        player_main.speed_x = 0 
                     else:
                         player_main.speed_x = 10
 
-            #when WASD is released
-            elif event.type == pygame.KEYUP: #when keys are released
+            #Stop movement when keys are released.
+            #Speed is set to 0.
+            elif event.type == pygame.KEYUP: 
                 if event.key == pygame.K_w or event.key == pygame.K_s:
-                    player_main.speed_y = 0 #stop moving on the y axis
+                    player_main.speed_y = 0 
                 if event.key == pygame.K_a or event.key == pygame.K_d:
-                    player_main.speed_x = 0 #stop moving on the x axis
+                    player_main.speed_x = 0 
 
-        #check if player hits any block / must be false to reset position
-        coal_blocks_hit_list = pygame.sprite.spritecollide(player_main, coal_list, False) #adds coal sprite to list when hit
+        #Collision check for player against other sprites..
+        #False == collision with the player sprite.
+        #After each collion, the object is added to the collision list.
+        coal_blocks_hit_list = pygame.sprite.spritecollide(player_main, coal_list, False)
+        presents_hit_list = pygame.sprite.spritecollide(player_main, presents_list, False)
 
-        #when a coal sprite is hit
-        for coal in coal_blocks_hit_list: #for each sprite in the list
-            coal_hit_counter += 1 #adds 1 to the counter
-            player_main.health_points += -1 #decreases health points by 1
+
+        #--- NON-PLAYER SPRITE POSITION RESETS ---
+        #After colliding with the player, the position of the object is reset.
+        #A counter also records the score and health of the player due to these collisions.
+        
+        #Coal.
+        for coal in coal_blocks_hit_list:
+            coal_hit_counter += 1 #Counter.
+            player_main.health_points += -1 #Decrease HP.
             print("Coal blocks hit: " + str(coal_hit_counter))
             print ("Health points: " + str(player_main.health_points))
-            coal.reset_pos() #resets position of coal sprite
+            coal.reset_pos() #Resets the position.
 
-        #check if player hits any block / must be false to reset position
-        presents_hit_list = pygame.sprite.spritecollide(player_main, presents_list, False) #adds present sprite to list when hit
-
-        #when present sprite is hit
+        #Presents.
         for present in presents_hit_list:
-            presents_hit_counter += 1 #add 1 to present hit counter
+            presents_hit_counter += 1 #Counter
             print("Presents collected: " + str(presents_hit_counter))
-            present.reset_pos() #reset present sprite position
+            present.reset_pos()
 
-        #drawing
-        screen.blit(background_image, [0,0]) #draws background
-        all_sprites_list.draw(screen) #draws all sprites on screen
-        player_main.move()#allows for player movement
+        
+        # --- DRAWING ---
+        #Background.
+        screen.blit(background_image, [0,0]) 
+        #Draws all sprites on the screen.
+        all_sprites_list.draw(screen)
+        #Player movement.
+        player_main.move()
 
-        #sets player boundaries and stops player
-        if player_main.rect.y <= 0 or player_main.rect.y >= 533: #if y axis out of bounds
-            player_main.speed_y = 0 #stops player
-        if player_main.rect.x <= 0 or player_main.rect.x >= 856: #if x axis out of bounds
-            player_main.speed_x = 0 #stops player
+        #Player boundaries.
+        #When player is detected out of bounds, the sprite is stopped.
+        #This works in conjucture with the input halt.
+        if player_main.rect.y <= 0 or player_main.rect.y >= 533: 
+            player_main.speed_y = 0 
+        if player_main.rect.x <= 0 or player_main.rect.x >= 856:
+            player_main.speed_x = 0
 
-        #displaying score
-        font = pygame.font.SysFont('Hobo STD', 50, True, False) #initializes font
-        score = font.render(str(int(presents_hit_counter)*10),True,WHITE) #gets score from presents hit
+        #Displaying the score.
+        #Using the number of presents hit, add up a total score.
+        #Multiply the presents hit by ten and print it as the score.
+        font = pygame.font.SysFont('Hobo STD', 50, True, False)
+        score = font.render(str(int(presents_hit_counter)*10),True,WHITE)
         score_text = font.render(("Score: "),True,WHITE)
-        screen.blit(score_text, [10, 10]) #blits "Score "
-        screen.blit(score, [150, 10]) #blits score to the screen
+        screen.blit(score_text, [10, 10])
+        screen.blit(score, [150, 10]) 
 
-        #displaying health
+        #Displaying HP.
+        #Blits "Health: " and the number.
         health = font.render(str(player_main.health_points),True,(232, 25, 25))
         health_text = font.render(("Health: "),True,(232, 25, 25))
-        screen.blit(health_text, [10, 50]) #blits "Health: "
-        screen.blit(health, [170, 50]) #blits health left as a number
+        screen.blit(health_text, [10, 50]) 
+        screen.blit(health, [170, 50]) 
         
-        #moving the non-player sprites, moving them back to a random starting position
-        presents_list.update(-8)#handles present sprites
-        coal_list.update(-10)   #handles coal sprites
+        #Moving the non-player sprites.
+        #Calls the "update" method for movement and to reset their positions if they move offscreen.
+        #Presents move a bit slower than the coal.
+        presents_list.update(-8)
+        coal_list.update(-10)
 
-        #game finishes
-        if player_main.health_points == 0: #when player health hits zero
-            main_music.stop() #stop the background music
-            death_sound.play() #play dark souls death sound
-            player_main.speed_y = 0 #stops sprite movement
-            player_main.speed_x = 0 #stops sprite movement
-            game_start = False #stops looping through game
-            end_screen = True #starts looping through end of game screen
-            show_instructions = False #will not show instructions on next games
-            player_main.health_points = 10 #resets hp back to 10
+        # --- GAME OVER ---
+        #When the player dies, death sound plays and the end game screen is shown.
+        #This is triggered by the health becoming to zero.
+        #The music is stopped and the game over sound is played.
+        if player_main.health_points == 0:
+            #Music.
+            main_music.stop() 
+            death_sound.play() 
+            #Stos any movement.
+            player_main.speed_y = 0 
+            player_main.speed_x = 0
+            #Stops game loop.
+            game_start = False
+            #Shows end screen.
+            end_screen = True
+            #Prevent instructions from showing again.
+            show_instructions = False
+            #HP is reset.
+            player_main.health_points = 10
 
-        #refreshing screen
+        #Refresh.
         pygame.display.flip()
         clock.tick(60)
 
-#exit pygame
+#Exit pygame.
 pygame.quit()
