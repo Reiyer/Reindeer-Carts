@@ -1,6 +1,4 @@
 #   @author Raymond Qu
-#   @instructor Mr. Reid
-#   @course ICS3U1
 #   @date 2018/01/22
 
 #   REINDEER CARTS: By R. Qu
